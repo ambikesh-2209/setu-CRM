@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Setu — Sales Companion</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --navy:#1B2A41; --navy-light:#2C4165; --amber:#C9852B; --amber-light:#E6A954;
+    --paper:#F7F5F0; --card:#FFFFFF; --ink:#1F2328; --slate:#6B7280; --line:#E4E1D8;
+    --green:#2F7D5C; --red:#B4432F; --teal:#2A7D8C; --purple:#6B5B95; --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none;}
+  #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--paper); padding-bottom:76px; position:relative;}
+  header.topbar{background:var(--navy); color:#fff; padding:18px 18px 16px; position:sticky; top:0; z-index:20;}
+  header.topbar .brand{display:flex; align-items:baseline; gap:8px;}
+  header.topbar .brand-mark{font-size:20px; font-weight:700; letter-spacing:0.3px;}
+  header.topbar .brand-sub{font-size:12px; color:#B9C3D4;}
+  header.topbar .screen-title{font-size:22px; font-weight:600; margin-top:10px; padding-right:44px;}
+  header.topbar .gbtn{position:absolute; right:16px; top:16px; width:36px;height:36px; border-radius:50%; border:none; background:rgba(255,255,255,0.14); color:#fff; font-size:13px; font-weight:700; cursor:pointer;}
+  header.topbar .gbtn.connected{background:var(--green);}
+  main{padding:16px;}
+  .section-label{font-size:13px; font-weight:600; color:var(--slate); margin:18px 4px 8px; display:flex; justify-content:space-between; align-items:center;}
+  .section-label a{font-size:12px; color:var(--navy); font-weight:600; cursor:pointer;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:10px;}
+  .stat-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+  .stat-box{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px;}
+  .stat-box .num{font-size:26px; font-weight:700; color:var(--navy); line-height:1;}
+  .stat-box .lbl{font-size:12.5px; color:var(--slate); margin-top:6px;}
+  .signin-banner{background:#EAF1FB; border:1px solid #C7D9F0; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px; color:#1B3A66;}
+  .signin-banner button{margin-top:8px;}
+  .lead-row{display:flex; align-items:center; background:var(--card); border:1px solid var(--line); border-left:5px solid var(--slate); border-radius:8px; padding:12px 12px; margin-bottom:8px; cursor:pointer;}
+  .lead-row .info{flex:1; min-width:0;}
+  .lead-row .name{font-weight:600; font-size:15.5px;}
+  .lead-row .meta{font-size:12.5px; color:var(--slate); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .lead-row .stage-tag{font-size:11px; font-weight:600; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:8px;}
+  .row-actions{display:flex; gap:6px; margin-left:8px;}
+  .icon-mini{width:30px;height:30px; border-radius:50%; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; text-decoration:none; color:var(--ink); flex:none;}
+  .empty-state{text-align:center; padding:40px 20px; color:var(--slate);}
+  .empty-state .big{font-size:36px; margin-bottom:10px;}
+  .fab{position:fixed; right:20px; bottom:88px; width:56px;height:56px; border-radius:50%; background:var(--amber); color:#fff; border:none; font-size:28px; box-shadow:0 4px 14px rgba(0,0,0,0.25); cursor:pointer; z-index:25; max-width:480px;}
+  nav.bottombar{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:#fff; border-top:1px solid var(--line); display:flex; z-index:30;}
+  nav.bottombar button{flex:1; background:none; border:none; padding:10px 0 8px; font-size:11px; color:var(--slate); cursor:pointer;}
+  nav.bottombar button .ic{display:block; font-size:19px; margin-bottom:2px;}
+  nav.bottombar button.active{color:var(--navy); font-weight:700;}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:13px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+  .field label .req{color:var(--red);}
+  .field input[type=text],.field input[type=tel],.field input[type=number],.field input[type=date],.field input[type=time],.field select,.field textarea{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px; font-size:15px; background:#fff; color:var(--ink); font-family:inherit;}
+  .field textarea{min-height:70px; resize:vertical;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .chip-group{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{padding:8px 13px; border-radius:20px; border:1px solid var(--line); background:#fff; font-size:13.5px; color:var(--ink); cursor:pointer;}
+  .chip.selected{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .outcome-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .outcome-opt{border:1.5px solid var(--line); border-radius:8px; padding:10px 8px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink); background:#fff;}
+  .outcome-opt.selected{color:#fff; border-color:transparent;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,20,20,0.5); z-index:50; display:flex; align-items:flex-end; justify-content:center;}
+  .modal-sheet{background:var(--paper); width:100%; max-width:480px; max-height:92vh; overflow-y:auto; border-radius:16px 16px 0 0; animation:slideup 0.22s ease-out;}
+  @keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal-header{position:sticky; top:0; background:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:16px 16px 12px; border-bottom:1px solid var(--line); z-index:2;}
+  .modal-header h2{margin:0; font-size:17px;}
+  .modal-header button{background:none; border:none; font-size:15px; cursor:pointer; padding:4px 6px;}
+  .btn-cancel{color:var(--slate);}
+  .btn-save{color:var(--navy); font-weight:700;}
+  .modal-body{padding:16px;}
+  .fieldset-title{font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--slate); margin:20px 0 10px;}
+  .detail-header{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px;}
+  .detail-header .name{font-size:19px; font-weight:700;}
+  .detail-header .sub{font-size:13px; color:var(--slate); margin-top:4px;}
+  .call-row{display:flex; gap:10px; margin-top:12px;}
+  .call-row a{flex:1; text-align:center; padding:10px; border-radius:8px; font-size:13.5px; font-weight:600; text-decoration:none;}
+  .call-row a.call{background:var(--navy); color:#fff;}
+  .call-row a.wa{background:#e7f5ee; color:var(--green);}
+  .visit-item{background:var(--card); border:1px solid var(--line); border-left:5px solid var(--slate); border-radius:8px; padding:12px; margin-bottom:10px;}
+  .visit-item .vhead{display:flex; justify-content:space-between; align-items:center;}
+  .visit-item .vdate{font-size:12.5px; color:var(--slate);}
+  .visit-item .voutcome{font-size:12px; font-weight:700; padding:3px 9px; border-radius:14px; color:#fff;}
+  .visit-item .vnotes{font-size:13.5px; margin-top:8px; color:var(--ink); white-space:pre-wrap;}
+  .visit-item .vfollowup{font-size:12.5px; color:var(--amber); margin-top:6px; font-weight:600; display:flex; align-items:center; gap:8px;}
+  .btn-primary{display:block; width:100%; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:13px; font-size:15px; font-weight:600; cursor:pointer; margin-top:6px;}
+  .btn-secondary{display:block; width:100%; background:#fff; color:var(--navy); border:1.5px solid var(--navy); border-radius:8px; padding:12px; font-size:14.5px; font-weight:600; cursor:pointer; margin-top:10px;}
+  .btn-google{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:#fff; color:#3c4043; border:1px solid #dadce0; border-radius:8px; padding:11px; font-size:14px; font-weight:600; cursor:pointer;}
+  .search-box{width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:20px; font-size:14.5px; background:#fff; margin-bottom:12px;}
+  .filter-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:10px;}
+  .filter-chip{flex:none; padding:7px 13px; border-radius:16px; border:1px solid var(--line); background:#fff; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer; white-space:nowrap;}
+  .filter-chip.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+  .toolbar-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .link-btn{background:none; border:none; color:var(--navy); font-size:13px; font-weight:600; cursor:pointer;}
+  .loading-screen{display:flex; align-items:center; justify-content:center; min-height:100vh; color:var(--slate); font-size:14px;}
+  .toast{position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 18px; border-radius:20px; font-size:13.5px; z-index:80; opacity:0; transition:opacity 0.25s; max-width:90%; text-align:center;}
+  .toast.show{opacity:1;}
+  .followup-alert{background:#FFF4E5; border:1px solid #F0D19A; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px; color:#8A5A15;}
+  .menu-item{display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-bottom:1px solid var(--line); font-size:15px; cursor:pointer;}
+  .menu-item .chev{color:var(--slate);}
+  input[type=file]{display:none;}
+  .bar-row{margin-bottom:10px;}
+  .bar-row .bar-label{display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;}
+  .bar-track{background:#EDEAE1; border-radius:6px; height:9px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:6px;}
+  .share-lead-pick{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer;}
+  .share-preview{width:100%; min-height:180px; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:13.5px; font-family:inherit; background:#fff;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading-screen">Loading Setu…</div></div>
+
+<script>
+/* =========================================================
+   SETUP REQUIRED: paste your Google OAuth Client ID below.
+   See the setup guide from Claude for how to get this.
+   ========================================================= */
+const CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com";
+const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events";
+const DRIVE_FILENAME = "setu-crm-data.json";
+
+// ---------- Reference data ----------
+const PROJECTS = ["Ayodhya City", "Kaushalya Bhavan", "Other"];
+const SOURCES = ["Walk-in", "Channel Partner", "Reference", "Online Enquiry", "Other"];
+const CONFIGS = ["1 RK", "1 BHK", "2 BHK", "2.5 BHK", "3 BHK", "3.5 BHK", "Shop/Commercial", "Other"];
+const OCCUPANCY = ["Owned", "Rented", "Living with Family", "Company Provided", "Other"];
+
+const OUTCOMES = [
+  {key:"hot", label:"Hot", color:"#B4432F"},
+  {key:"warm", label:"Warm", color:"#C9852B"},
+  {key:"cold", label:"Cold", color:"#2A7D8C"},
+  {key:"eoi", label:"EOI Submitted", color:"#2F7D5C"},
+  {key:"revisit", label:"Revisit Planned", color:"#6B5B95"},
+  {key:"booking_confirmed", label:"Booking Confirmed", color:"#2F7D5C"},
+  {key:"booking_cancelled", label:"Booking Cancelled", color:"#8a8a8a"},
+  {key:"lost", label:"Lost", color:"#8a8a8a"},
+];
+const OUTCOME_MAP = Object.fromEntries(OUTCOMES.map(o=>[o.key,o]));
+const REASONS = [
+  "High price / Low budget fit","Location issue","Didn't like layout","Loan eligibility issue",
+  "Inventory / unit choice issue","Possession timeline mismatch","Comparing with competition",
+  "Family visit / approval pending","Booked elsewhere","Needs more time","Non-contactable after visit",
+  "General enquiry only","Other"
+];
+const STAGE_COLORS = {
+  new:"#6B7280", hot:"#B4432F", warm:"#C9852B", cold:"#2A7D8C", eoi:"#2F7D5C", revisit:"#6B5B95",
+  booking_confirmed:"#2F7D5C", booking_cancelled:"#8a8a8a", lost:"#8a8a8a"
+};
+const REQUIRED_FIELDS = ["name","phone","age","profession","occupancyType","currentApartmentType","project","configuration","budget","source","lookingFor"];
+
+// ---------- State ----------
+let DATA = { leads: [] };
+let currentTab = "dashboard";
+let currentLeadId = null;
+let leadFilter = "all";
+let sourceFilter = "all";
+let searchTerm = "";
+let shareLeadId = null;
+let accessToken = null;
+let tokenClient = null;
+let driveFileId = null;
+let gisReady = false;
+
+// ---------- Local cache (always available, works before/without sign-in) ----------
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem("setu_data");
+    if(raw) DATA = JSON.parse(raw);
+  }catch(e){ DATA = {leads:[]}; }
+}
+function saveLocal(){
+  try{ localStorage.setItem("setu_data", JSON.stringify(DATA)); }catch(e){}
+}
+
+// ---------- Google Identity / Drive / Calendar ----------
+window.onload = function(){
+  initGis();
+};
+function initGis(){
+  const tryInit = ()=>{
+    if(window.google && google.accounts && google.accounts.oauth2){
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (resp)=>{
+          if(resp && resp.access_token){
+            accessToken = resp.access_token;
+            await afterSignIn();
+          } else {
+            showToast("Sign-in didn't complete");
+          }
+        }
+      });
+      gisReady = true;
+    } else {
+      setTimeout(tryInit, 300);
+    }
+  };
+  tryInit();
+}
+function signIn(){
+  if(CLIENT_ID.indexOf("PASTE_YOUR") === 0){
+    showToast("Add your Google Client ID in the code first");
+    return;
+  }
+  if(!gisReady){ showToast("Still loading Google sign-in, try again in a moment"); return; }
+  tokenClient.requestAccessToken({prompt: accessToken ? "" : "consent"});
+}
+function signOut(){
+  if(accessToken){
+    google.accounts.oauth2.revoke(accessToken, ()=>{});
+  }
+  accessToken = null; driveFileId = null;
+  render();
+  showToast("Signed out of Google");
+}
+async function afterSignIn(){
+  try{
+    await ensureDriveFile();
+    await loadFromDrive();
+    saveLocal();
+    showToast("Connected — synced with Google Drive");
+  }catch(e){
+    showToast("Connected, but Drive sync had an issue");
+  }
+  render();
+}
+async function driveFetch(url, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({"Authorization":"Bearer "+accessToken}, opts.headers||{});
+  return fetch(url, opts);
+}
+async function ensureDriveFile(){
+  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`);
+  const j = await res.json();
+  if(j.files && j.files.length){
+    driveFileId = j.files[0].id;
+  } else {
+    const metadata = {name: DRIVE_FILENAME, mimeType:"application/json"};
+    const boundary = "setu_boundary";
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(DATA)}\r\n--${boundary}--`;
+    const res2 = await driveFetch(`https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`, {
+      method:"POST",
+      headers:{"Content-Type":`multipart/related; boundary=${boundary}`},
+      body
+    });
+    const j2 = await res2.json();
+    driveFileId = j2.id;
+  }
+}
+async function loadFromDrive(){
+  if(!driveFileId) return;
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`);
+  const text = await res.text();
+  try{
+    const parsed = JSON.parse(text);
+    if(parsed && parsed.leads) DATA = parsed;
+  }catch(e){}
+}
+async function saveToDrive(){
+  if(!accessToken || !driveFileId) return;
+  try{
+    await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+      method:"PATCH",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(DATA)
+    });
+  }catch(e){}
+}
+async function saveData(){
+  saveLocal();
+  await saveToDrive(); // best-effort, no-op if not signed in
+}
+
+// ---- Calendar ----
+async function addCalendarReminder(title, dateStr, timeStr, notes){
+  if(!dateStr) return;
+  timeStr = timeStr || "11:00";
+  if(accessToken){
+    try{
+      const start = new Date(`${dateStr}T${timeStr}:00+05:30`);
+      const end = new Date(start.getTime()+30*60000);
+      const body = {
+        summary: title,
+        description: notes||"",
+        start:{dateTime:start.toISOString(), timeZone:"Asia/Kolkata"},
+        end:{dateTime:end.toISOString(), timeZone:"Asia/Kolkata"},
+        reminders:{useDefault:false, overrides:[{method:"popup", minutes:30}]}
+      };
+      const res = await driveFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events`, {
+        method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+      });
+      if(res.ok){ showToast("Reminder added to Google Calendar"); return; }
+    }catch(e){}
+  }
+  openCalendarLink(title, dateStr, timeStr, notes);
+}
+function openCalendarLink(title, dateStr, timeStr, notes){
+  timeStr = timeStr || "11:00";
+  const start = new Date(`${dateStr}T${timeStr}:00+05:30`);
+  const end = new Date(start.getTime()+30*60000);
+  const fmt = d => d.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent(notes||"")}`;
+  window.open(url, "_blank");
+}
+
+// ---------- Helpers ----------
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(d){
+  if(!d) return "";
+  const dt = new Date(d+"T00:00:00");
+  return `${dt.getDate()} ${dt.toLocaleString('en-IN',{month:'short'})} ${dt.getFullYear()}`;
+}
+function showToast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t=document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove("show"), 2400);
+}
+function getLead(id){ return DATA.leads.find(l=>l.id===id); }
+function latestVisit(lead){ return (lead.visits&&lead.visits.length) ? lead.visits[lead.visits.length-1] : null; }
+function currentStageOf(lead){ const v=latestVisit(lead); return v ? v.outcome : "new"; }
+function isIncomplete(lead){ return REQUIRED_FIELDS.some(f => !lead[f]); }
+function neverVisited(lead){ return !(lead.visits && lead.visits.length); }
+function allFollowUps(){
+  const out = [];
+  DATA.leads.forEach(lead=>{
+    const v = latestVisit(lead);
+    if(v && v.nextFollowUp){
+      out.push({leadId:lead.id, name:lead.name, phone:lead.phone, date:v.nextFollowUp, time:v.nextFollowUpTime, project:lead.project, notes:v.notes});
+    }
+  });
+  out.sort((a,b)=>a.date.localeCompare(b.date));
+  return out;
+}
+function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+// ---------- Rendering shell ----------
+const app = document.getElementById("app");
+function render(){
+  if(currentTab==="dashboard") renderDashboard();
+  else if(currentTab==="leads") renderLeadsList();
+  else if(currentTab==="detail") renderLeadDetail();
+  else if(currentTab==="share") renderShareTab();
+}
+function shell(titleHtml, contentHtml){
+  const gBtn = `<button class="gbtn ${accessToken?'connected':''}" onclick="accessToken?openMenu():signIn()" title="${accessToken?'Connected to Google':'Sign in with Google'}">${accessToken?'✓':'G'}</button>`;
+  return `
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">Setu</span><span class="brand-sub">Sales Companion</span></div>
+      ${gBtn}
+      <div class="screen-title">${titleHtml}</div>
+    </header>
+    <main>${contentHtml}</main>
+    ${bottomNav()}
+    <button class="fab" onclick="openAddLead()">＋</button>
+  `;
+}
+function bottomNav(){
+  return `
+  <nav class="bottombar">
+    <button class="${currentTab==='dashboard'?'active':''}" onclick="goTab('dashboard')"><span class="ic">⌂</span>Dashboard</button>
+    <button class="${currentTab==='leads'||currentTab==='detail'?'active':''}" onclick="goTab('leads')"><span class="ic">☰</span>Leads</button>
+    <button class="${currentTab==='share'?'active':''}" onclick="goTab('share')"><span class="ic">↗</span>Share</button>
+    <button onclick="openMenu()"><span class="ic">⋯</span>More</button>
+  </nav>`;
+}
+function goTab(tab){
+  currentTab = tab;
+  if(tab==="leads"){ leadFilter="all"; sourceFilter="all"; searchTerm=""; }
+  if(tab==="share"){ shareLeadId=null; }
+  render();
+}
+
+// ---------- Dashboard ----------
+function renderDashboard(){
+  const leads = DATA.leads;
+  const hot = leads.filter(l=>currentStageOf(l)==="hot").length;
+  const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate()-7);
+  const visitsThisWeek = leads.reduce((sum,l)=>sum + (l.visits||[]).filter(v=>new Date(v.date)>=oneWeekAgo).length, 0);
+  const booked = leads.filter(l=>currentStageOf(l)==="booking_confirmed").length;
+  const today = todayStr();
+  const fups = allFollowUps();
+  const missed = fups.filter(f=>f.date<today);
+  const dueToday = fups.filter(f=>f.date===today);
+  const pendingFeedback = leads.filter(neverVisited);
+  const incomplete = leads.filter(isIncomplete);
+
+  const signinBanner = !accessToken ? `
+    <div class="signin-banner">
+      Connect Google to sync your data to Drive and auto-create Calendar reminders for follow-ups.
+      <button class="btn-google" onclick="signIn()">Sign in with Google</button>
+    </div>` : "";
+
+  const renderList = (items, keyFn, emptyText, dangerDate)=>{
+    if(!items.length) return `<div class="empty-state" style="padding:16px;">${emptyText}</div>`;
+    return items.slice(0,6).map(keyFn).join("");
+  };
+
+  const todayHtml = renderList(dueToday, f=>followUpRow(f,'#C9852B'), "Nothing due today.");
+  const missedHtml = renderList(missed, f=>followUpRow(f,'#B4432F'), "No missed follow-ups. Nice work.");
+  const pendingFbHtml = renderList(pendingFeedback, l=>`
+    <div class="lead-row" style="border-left-color:#6B7280" onclick="openLead('${l.id}')">
+      <div class="info"><div class="name">${escapeHtml(l.name)}</div><div class="meta">${escapeHtml(l.project||'')} · no visit logged yet</div></div>
+    </div>`, "No pending feedback — every lead has a logged visit.");
+  const incompleteHtml = renderList(incomplete, l=>`
+    <div class="lead-row" style="border-left-color:#C9852B" onclick="openEditLead('${l.id}')">
+      <div class="info"><div class="name">${escapeHtml(l.name)}</div><div class="meta">Enquiry form incomplete — tap to finish</div></div>
+    </div>`, "All enquiry forms are complete.");
+
+  // stage-wise report
+  const stageOrder = ["new","hot","warm","cold","eoi","revisit","booking_confirmed","booking_cancelled","lost"];
+  const stageLabel = {new:"New / No visit yet"};
+  const total = leads.length || 1;
+  const barsHtml = stageOrder.map(key=>{
+    const count = leads.filter(l=>currentStageOf(l)===key).length;
+    const label = stageLabel[key] || (OUTCOME_MAP[key]?OUTCOME_MAP[key].label:key);
+    const pct = Math.round((count/total)*100);
+    return `<div class="bar-row">
+      <div class="bar-label"><span>${label}</span><span>${count}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${STAGE_COLORS[key]}"></div></div>
+    </div>`;
+  }).join("");
+
+  const content = `
+    ${signinBanner}
+    <div class="stat-row">
+      <div class="stat-box"><div class="num">${leads.length}</div><div class="lbl">Total leads</div></div>
+      <div class="stat-box"><div class="num">${hot}</div><div class="lbl">Hot leads</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="num">${visitsThisWeek}</div><div class="lbl">Site visits (7 days)</div></div>
+      <div class="stat-box"><div class="num">${booked}</div><div class="lbl">Booked</div></div>
+    </div>
+
+    <div class="section-label">Today's follow-ups</div>
+    ${todayHtml}
+
+    <div class="section-label">Missed follow-ups</div>
+    ${missedHtml}
+
+    <div class="section-label">Pending feedback (no visit logged)</div>
+    ${pendingFbHtml}
+
+    <div class="section-label">Incomplete enquiry forms</div>
+    ${incompleteHtml}
+
+    <div class="section-label">Lead report — stage wise</div>
+    <div class="card">${barsHtml}</div>
+  `;
+  app.innerHTML = shell("Dashboard", content);
+}
+function followUpRow(f, color){
+  const digits = (f.phone||"").replace(/\D/g,"");
+  return `
+  <div class="lead-row" style="border-left-color:${color}">
+    <div class="info" onclick="openLead('${f.leadId}')">
+      <div class="name">${escapeHtml(f.name)}</div>
+      <div class="meta">${escapeHtml(f.project||'')} · ${fmtDate(f.date)}${f.time?(' '+f.time):''}</div>
+    </div>
+    <div class="row-actions">
+      ${digits?`<a class="icon-mini" href="tel:${digits}">📞</a>`:""}
+      <span class="icon-mini" onclick="addCalendarReminder('Follow-up: ${escapeAttr(f.name)}','${f.date}','${f.time||"11:00"}','${escapeAttr(f.notes||"")}')">📅</span>
+    </div>
+  </div>`;
+}
+
+// ---------- Leads list ----------
+function renderLeadsList(){
+  let leads = DATA.leads.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  if(leadFilter!=="all") leads = leads.filter(l=>currentStageOf(l)===leadFilter);
+  if(sourceFilter!=="all") leads = leads.filter(l=>l.source===sourceFilter);
+  if(searchTerm.trim()){
+    const q = searchTerm.trim().toLowerCase();
+    leads = leads.filter(l=>(l.name||"").toLowerCase().includes(q) || (l.phone||"").includes(q));
+  }
+  const stageFilters = [["all","All"],["hot","Hot"],["warm","Warm"],["cold","Cold"],["revisit","Revisit"],["booking_confirmed","Booked"],["lost","Lost"]];
+  const stageHtml = stageFilters.map(([k,l])=>`<div class="filter-chip ${leadFilter===k?'active':''}" onclick="setFilter('${k}')">${l}</div>`).join("");
+  const sourceHtml = [["all","All sources"], ...SOURCES.map(s=>[s,s])].map(([k,l])=>`<div class="filter-chip ${sourceFilter===k?'active':''}" onclick="setSourceFilter('${k}')">${l}</div>`).join("");
+
+  const rows = leads.length ? leads.map(l=>{
+    const stage = currentStageOf(l);
+    const color = STAGE_COLORS[stage] || "#6B7280";
+    const label = stage==="new" ? "New" : (OUTCOME_MAP[stage]?.label || stage);
+    return `
+    <div class="lead-row" style="border-left-color:${color}" onclick="openLead('${l.id}')">
+      <div class="info">
+        <div class="name">${escapeHtml(l.name)}</div>
+        <div class="meta">${escapeHtml(l.project||'')} ${l.configuration?('· '+escapeHtml(l.configuration)):''} ${l.source?('· '+escapeHtml(l.source)):''}</div>
+      </div>
+      <div class="stage-tag" style="background:${color}22; color:${color}">${label}</div>
+    </div>`;
+  }).join("") : `<div class="empty-state"><div class="big">👥</div>No leads here yet.<br>Tap + to add your first lead.</div>`;
+
+  const content = `
+    <input class="search-box" placeholder="Search by name or phone" value="${escapeAttr(searchTerm)}" oninput="onSearch(this.value)">
+    <div class="toolbar-row">
+      <span style="font-size:12.5px;color:var(--slate)">${leads.length} lead${leads.length!==1?'s':''}</span>
+      <button class="link-btn" onclick="exportLeadsCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="filter-row">${stageHtml}</div>
+    <div class="filter-row">${sourceHtml}</div>
+    ${rows}
+  `;
+  app.innerHTML = shell("Leads", content);
+}
+function setFilter(f){ leadFilter=f; renderLeadsList(); }
+function setSourceFilter(f){ sourceFilter=f; renderLeadsList(); }
+function onSearch(v){ searchTerm=v; renderLeadsList(); }
+
+function exportLeadsCSV(){
+  let leads = DATA.leads.slice();
+  if(leadFilter!=="all") leads = leads.filter(l=>currentStageOf(l)===leadFilter);
+  if(sourceFilter!=="all") leads = leads.filter(l=>l.source===sourceFilter);
+  const cols = ["name","phone","project","configuration","budget","source","cpName","cpPhone","age","profession","occupancyType","currentApartmentType","residenceLocation","lookingFor","createdAt"];
+  const header = ["Name","Phone","Project","Configuration","Budget","Source","CP Name","CP Phone","Age","Profession","Occupancy","Current Apartment","Residence Location","Looking For","Created","Stage"];
+  const rows = leads.map(l=>{
+    const vals = cols.map(c=>`"${(l[c]||"").toString().replace(/"/g,'""')}"`);
+    vals.push(currentStageOf(l));
+    return vals.join(",");
+  });
+  const csv = [header.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `setu-leads-${todayStr()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  showToast("CSV downloaded");
+}
+
+// ---------- Lead detail ----------
+function openLead(id){ currentLeadId=id; currentTab="detail"; render(); }
+function renderLeadDetail(){
+  const lead = getLead(currentLeadId);
+  if(!lead){ goTab("leads"); return; }
+  const stage = currentStageOf(lead);
+  const color = STAGE_COLORS[stage] || "#6B7280";
+  const label = stage==="new" ? "New lead" : (OUTCOME_MAP[stage]?.label || stage);
+  const visits = (lead.visits||[]).slice().reverse();
+  const visitsHtml = visits.length ? visits.map(v=>{
+    const oc = OUTCOME_MAP[v.outcome];
+    return `
+    <div class="visit-item" style="border-left-color:${oc?oc.color:'#6B7280'}">
+      <div class="vhead">
+        <span class="vdate">${fmtDate(v.date)}${v.unitShown?(' · '+escapeHtml(v.unitShown)):''}</span>
+        <span class="voutcome" style="background:${oc?oc.color:'#6B7280'}">${oc?oc.label:v.outcome}</span>
+      </div>
+      ${v.reason?`<div class="vnotes"><b>Reason:</b> ${escapeHtml(v.reason)}</div>`:""}
+      ${v.notes?`<div class="vnotes">${escapeHtml(v.notes)}</div>`:""}
+      ${v.budgetIndicated?`<div class="vnotes"><b>Budget indicated:</b> ₹${escapeHtml(v.budgetIndicated)}</div>`:""}
+      ${v.nextFollowUp?`<div class="vfollowup">📅 Next follow-up: ${fmtDate(v.nextFollowUp)} ${v.nextFollowUpTime||''}
+        <span class="icon-mini" style="width:24px;height:24px;font-size:12px" onclick="addCalendarReminder('Follow-up: ${escapeAttr(lead.name)}','${v.nextFollowUp}','${v.nextFollowUpTime||"11:00"}','${escapeAttr(v.notes||"")}')">＋</span></div>`:""}
+    </div>`;
+  }).join("") : `<div class="empty-state" style="padding:24px;">No site visits logged yet.</div>`;
+
+  const phoneDigits = (lead.phone||"").replace(/\D/g,"");
+  const content = `
+    <div class="detail-header">
+      <div class="name">${escapeHtml(lead.name)}</div>
+      <div class="sub">${escapeHtml(lead.project||'')}${lead.configuration?(' · '+escapeHtml(lead.configuration)):''}${lead.budget?(' · Budget ₹'+escapeHtml(lead.budget)):''}</div>
+      <div class="sub">${lead.age?('Age '+escapeHtml(lead.age)+' · '):''}${escapeHtml(lead.profession||'')}</div>
+      <div class="sub">${escapeHtml(lead.occupancyType||'')}${lead.currentApartmentType?(' · currently in '+escapeHtml(lead.currentApartmentType)):''}${lead.residenceLocation?(' · '+escapeHtml(lead.residenceLocation)):''}</div>
+      ${lead.lookingFor?`<div class="sub">Looking for: ${escapeHtml(lead.lookingFor)}</div>`:""}
+      <div class="sub">Source: ${escapeHtml(lead.source||'—')}${lead.cpName?(' ('+escapeHtml(lead.cpName)+')'):''}</div>
+      <div class="stage-tag" style="background:${color}22;color:${color};display:inline-block;margin-top:8px;">${label}</div>
+      ${phoneDigits ? `
+      <div class="call-row">
+        <a class="call" href="tel:${phoneDigits}">📞 Call</a>
+        <a class="wa" href="https://wa.me/${phoneDigits.length===10?('91'+phoneDigits):phoneDigits}" target="_blank">💬 WhatsApp</a>
+      </div>` : ""}
+      <button class="btn-secondary" onclick="openEditLead('${lead.id}')">Edit lead details</button>
+    </div>
+    <button class="btn-primary" onclick="openFeedbackForm('${lead.id}')">＋ Log Site Visit / Feedback</button>
+    <button class="btn-secondary" onclick="shareLeadId='${lead.id}'; goTab('share');">↗ Share with Channel Partner</button>
+    <div class="section-label">Visit history</div>
+    ${visitsHtml}
+  `;
+  app.innerHTML = shell(`<span style="cursor:pointer" onclick="goTab('leads')">‹ Back</span>`, content);
+}
+
+// ---------- Add / Edit Lead ----------
+function openAddLead(){ openLeadForm(null); }
+function openEditLead(id){ openLeadForm(id); }
+function openLeadForm(id){
+  const lead = id ? getLead(id) : null;
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay"; overlay.id = "modalOverlay";
+  overlay.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <h2>${lead?"Edit Lead":"New Lead"}</h2>
+        <button class="btn-save" onclick="saveLeadForm(${lead?`'${lead.id}'`:'null'})">Save</button>
+      </div>
+      <div class="modal-body">
+        <div class="fieldset-title">Contact</div>
+        <div class="field"><label>Name <span class="req">*</span></label>
+          <input type="text" id="f_name" value="${lead?escapeAttr(lead.name):''}" placeholder="Client's full name"></div>
+        <div class="field"><label>Phone <span class="req">*</span></label>
+          <input type="tel" id="f_phone" value="${lead?escapeAttr(lead.phone):''}" placeholder="10-digit mobile number"></div>
+
+        <div class="fieldset-title">Client profile</div>
+        <div class="two-col">
+          <div class="field"><label>Age</label><input type="number" id="f_age" value="${lead?escapeAttr(lead.age||''):''}" placeholder="e.g. 34"></div>
+          <div class="field"><label>Profession</label><input type="text" id="f_profession" value="${lead?escapeAttr(lead.profession||''):''}" placeholder="e.g. IT Manager"></div>
+        </div>
+        <div class="field"><label>Current residence location</label>
+          <input type="text" id="f_residence" value="${lead?escapeAttr(lead.residenceLocation||''):''}" placeholder="e.g. Dombivli East"></div>
+        <div class="field"><label>Current apartment type</label>
+          <select id="f_current_apt"><option value="">—</option>${CONFIGS.map(c=>`<option ${lead&&lead.currentApartmentType===c?'selected':''}>${c}</option>`).join("")}</select></div>
+        <div class="field"><label>Owned or rented</label>
+          <div class="chip-group" id="f_occupancy_group">
+            ${OCCUPANCY.map(o=>`<div class="chip ${lead&&lead.occupancyType===o?'selected':''}" data-val="${o}" onclick="selectChip('f_occupancy_group', this)">${o}</div>`).join("")}
+          </div></div>
+
+        <div class="fieldset-title">Requirement</div>
+        <div class="field"><label>What is he/she looking for</label>
+          <input type="text" id="f_lookingfor" value="${lead?escapeAttr(lead.lookingFor||''):''}" placeholder="e.g. 2BHK for self-use, ready possession"></div>
+        <div class="field"><label>Project</label>
+          <select id="f_project">${PROJECTS.map(p=>`<option ${lead&&lead.project===p?'selected':''}>${p}</option>`).join("")}</select></div>
+        <div class="field"><label>Configuration wanted</label>
+          <select id="f_config"><option value="">—</option>${CONFIGS.map(c=>`<option ${lead&&lead.configuration===c?'selected':''}>${c}</option>`).join("")}</select></div>
+        <div class="field"><label>Budget (₹)</label>
+          <input type="text" id="f_budget" value="${lead?escapeAttr(lead.budget||''):''}" placeholder="e.g. 65,00,000"></div>
+
+        <div class="fieldset-title">Source</div>
+        <div class="field"><label>Source</label>
+          <div class="chip-group" id="f_source_group">
+            ${SOURCES.map(s=>`<div class="chip ${lead&&lead.source===s?'selected':''}" data-val="${s}" onclick="selectChip('f_source_group', this)">${s}</div>`).join("")}
+          </div></div>
+        <div id="f_cp_fields" style="display:${lead&&lead.source==='Channel Partner'?'block':'none'}">
+          <div class="field"><label>Channel Partner name</label><input type="text" id="f_cpname" value="${lead?escapeAttr(lead.cpName||''):''}"></div>
+          <div class="field"><label>Channel Partner phone</label><input type="tel" id="f_cpphone" value="${lead?escapeAttr(lead.cpPhone||''):''}"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById("f_source_group").addEventListener("click", ()=>{
+    const sel = overlay.querySelector("#f_source_group .chip.selected");
+    document.getElementById("f_cp_fields").style.display = (sel && sel.dataset.val==="Channel Partner") ? "block":"none";
+  });
+}
+function selectChip(groupId, el){
+  document.querySelectorAll(`#${groupId} .chip`).forEach(c=>c.classList.remove("selected"));
+  el.classList.add("selected");
+}
+function selectOutcome(el){
+  document.querySelectorAll(".outcome-opt").forEach(c=>{c.classList.remove("selected"); c.style.background="#fff"; c.style.color="var(--ink)";});
+  el.classList.add("selected"); el.style.background = el.dataset.color; el.style.color = "#fff";
+  const key = el.dataset.key;
+  const reasonField = document.getElementById("reasonField");
+  if(reasonField) reasonField.style.display = (key==="lost"||key==="cold"||key==="booking_cancelled") ? "block":"none";
+}
+function closeModal(){ const o=document.getElementById("modalOverlay"); if(o) o.remove(); }
+
+async function saveLeadForm(id){
+  const name = document.getElementById("f_name").value.trim();
+  const phone = document.getElementById("f_phone").value.trim();
+  if(!name || !phone){ showToast("Name and phone are required"); return; }
+  const data = {
+    name, phone,
+    age: document.getElementById("f_age").value.trim(),
+    profession: document.getElementById("f_profession").value.trim(),
+    residenceLocation: document.getElementById("f_residence").value.trim(),
+    currentApartmentType: document.getElementById("f_current_apt").value,
+    occupancyType: (document.querySelector("#f_occupancy_group .chip.selected")||{}).dataset?.val || "",
+    lookingFor: document.getElementById("f_lookingfor").value.trim(),
+    project: document.getElementById("f_project").value,
+    configuration: document.getElementById("f_config").value,
+    budget: document.getElementById("f_budget").value.trim(),
+    source: (document.querySelector("#f_source_group .chip.selected")||{}).dataset?.val || "",
+    cpName: document.getElementById("f_cpname") ? document.getElementById("f_cpname").value.trim() : "",
+    cpPhone: document.getElementById("f_cpphone") ? document.getElementById("f_cpphone").value.trim() : "",
+  };
+  if(id){
+    Object.assign(getLead(id), data);
+  } else {
+    DATA.leads.push(Object.assign({id:uid(), createdAt:new Date().toISOString(), visits:[]}, data));
+  }
+  await saveData();
+  closeModal();
+  showToast("Lead saved");
+  if(id){ currentTab="detail"; currentLeadId=id; render(); } else { currentTab="leads"; render(); }
+}
+
+// ---------- Feedback / Site Visit ----------
+function openFeedbackForm(leadId){
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay"; overlay.id = "modalOverlay";
+  overlay.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <h2>Site Visit Feedback</h2>
+        <button class="btn-save" onclick="saveFeedbackForm('${leadId}')">Save</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Visit date</label><input type="date" id="v_date" value="${todayStr()}"></div>
+        <div class="field"><label>Unit shown</label><input type="text" id="v_unit" placeholder="e.g. B-1803, Tower B"></div>
+        <div class="field"><label>What was covered</label>
+          <div class="chip-group" id="v_covered_group">
+            ${["Flat shown","Pricing discussed","AV / video shown","Brochure given"].map(c=>`<div class="chip" data-val="${c}" onclick="this.classList.toggle('selected')">${c}</div>`).join("")}
+          </div></div>
+        <div class="field"><label>Outcome <span class="req">*</span></label>
+          <div class="outcome-grid" id="v_outcome_group">
+            ${OUTCOMES.map(o=>`<div class="outcome-opt" data-key="${o.key}" data-color="${o.color}" onclick="selectOutcome(this)">${o.label}</div>`).join("")}
+          </div></div>
+        <div class="field" id="reasonField" style="display:none;"><label>Reason</label>
+          <select id="v_reason"><option value="">—</option>${REASONS.map(r=>`<option>${r}</option>`).join("")}</select></div>
+        <div class="field"><label>Budget indicated (₹)</label><input type="text" id="v_budget" placeholder="e.g. 70,00,000"></div>
+        <div class="two-col">
+          <div class="field"><label>Next follow-up date</label><input type="date" id="v_followup"></div>
+          <div class="field"><label>Time</label><input type="time" id="v_followup_time" value="11:00"></div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="v_notes" placeholder="Anything else worth remembering"></textarea></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+async function saveFeedbackForm(leadId){
+  const outcomeEl = document.querySelector("#v_outcome_group .outcome-opt.selected");
+  if(!outcomeEl){ showToast("Please select an outcome"); return; }
+  const covered = Array.from(document.querySelectorAll("#v_covered_group .chip.selected")).map(c=>c.dataset.val);
+  const visit = {
+    id: uid(),
+    date: document.getElementById("v_date").value || todayStr(),
+    unitShown: document.getElementById("v_unit").value.trim(),
+    covered,
+    outcome: outcomeEl.dataset.key,
+    reason: document.getElementById("v_reason") ? document.getElementById("v_reason").value : "",
+    budgetIndicated: document.getElementById("v_budget").value.trim(),
+    nextFollowUp: document.getElementById("v_followup").value || "",
+    nextFollowUpTime: document.getElementById("v_followup_time").value || "11:00",
+    notes: document.getElementById("v_notes").value.trim(),
+  };
+  const lead = getLead(leadId);
+  lead.visits = lead.visits || [];
+  lead.visits.push(visit);
+  await saveData();
+  closeModal();
+  showToast("Feedback saved");
+  if(visit.nextFollowUp){
+    addCalendarReminder(`Follow-up: ${lead.name}`, visit.nextFollowUp, visit.nextFollowUpTime, visit.notes);
+  }
+  currentTab="detail"; currentLeadId=leadId; render();
+}
+
+// ---------- Share with Channel Partner ----------
+function renderShareTab(){
+  let body;
+  if(!shareLeadId){
+    const q = searchTerm.trim().toLowerCase();
+    let leads = DATA.leads.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+    if(q) leads = leads.filter(l=>(l.name||"").toLowerCase().includes(q) || (l.phone||"").includes(q));
+    body = `
+      <input class="search-box" placeholder="Search a lead to share" value="${escapeAttr(searchTerm)}" oninput="onShareSearch(this.value)">
+      ${leads.length ? leads.map(l=>`
+        <div class="share-lead-pick" onclick="shareLeadId='${l.id}'; render();">
+          <b>${escapeHtml(l.name)}</b><br>
+          <span style="font-size:12.5px;color:var(--slate)">${escapeHtml(l.project||'')} · ${currentStageOf(l)==='new'?'New':(OUTCOME_MAP[currentStageOf(l)]?.label||'')}</span>
+        </div>`).join("") : `<div class="empty-state">No leads found.</div>`}
+    `;
+  } else {
+    const lead = getLead(shareLeadId);
+    if(!lead){ shareLeadId=null; renderShareTab(); return; }
+    const v = latestVisit(lead);
+    const stage = currentStageOf(lead);
+    const stageLabel = stage==="new" ? "New — no site visit yet" : (OUTCOME_MAP[stage]?.label||stage);
+    let msg = `*${lead.name}* — ${lead.project||''}${lead.configuration?(' ('+lead.configuration+')'):''}\n`;
+    msg += `Budget: ₹${lead.budget||'—'}\n`;
+    msg += `Current status: ${stageLabel}\n`;
+    if(v){
+      msg += `Last visit: ${fmtDate(v.date)}${v.unitShown?(' - '+v.unitShown):''}\n`;
+      if(v.reason) msg += `Reason: ${v.reason}\n`;
+      if(v.notes) msg += `Feedback: ${v.notes}\n`;
+      if(v.nextFollowUp) msg += `Next follow-up: ${fmtDate(v.nextFollowUp)}${v.nextFollowUpTime?(' '+v.nextFollowUpTime):''}\n`;
+    }
+    msg += `\n— Shared via Setu`;
+    body = `
+      <div class="card"><b>${escapeHtml(lead.name)}</b><br><span style="font-size:12.5px;color:var(--slate)">${escapeHtml(lead.project||'')}</span></div>
+      <div class="field"><label>Channel Partner phone number</label>
+        <input type="tel" id="share_phone" value="${escapeAttr(lead.cpPhone||'')}" placeholder="10-digit number"></div>
+      <div class="field"><label>Message preview (editable)</label>
+        <textarea class="share-preview" id="share_msg">${escapeHtml(msg)}</textarea></div>
+      <button class="btn-primary" onclick="sendShareWhatsApp()">💬 Send via WhatsApp</button>
+      <button class="btn-secondary" onclick="shareLeadId=null; render();">‹ Choose a different lead</button>
+    `;
+  }
+  app.innerHTML = shell("Share with CP", body);
+}
+function onShareSearch(v){ searchTerm=v; renderShareTab(); }
+function sendShareWhatsApp(){
+  const phone = document.getElementById("share_phone").value.replace(/\D/g,"");
+  const msg = document.getElementById("share_msg").value;
+  if(!phone){ showToast("Enter a phone number"); return; }
+  const full = phone.length===10 ? ("91"+phone) : phone;
+  window.open(`https://wa.me/${full}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+// ---------- More menu ----------
+function openMenu(){
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay"; overlay.id = "modalOverlay";
+  overlay.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-header"><button class="btn-cancel" onclick="closeModal()">Close</button><h2>More</h2><span></span></div>
+      <div class="modal-body">
+        ${accessToken ? `
+          <div class="menu-item" onclick="signOut(); closeModal();"><span>✓ Connected to Google — tap to sign out</span><span class="chev">›</span></div>
+        ` : `
+          <div class="menu-item" onclick="signIn(); closeModal();"><span>Sign in with Google</span><span class="chev">›</span></div>
+        `}
+        <div class="menu-item" onclick="exportBackup()"><span>⬇ Download backup (JSON)</span><span class="chev">›</span></div>
+        <div class="menu-item" onclick="document.getElementById('restoreInput').click()"><span>⬆ Restore from backup</span><span class="chev">›</span></div>
+        <input type="file" id="restoreInput" accept="application/json" onchange="importBackup(event)">
+        <p style="font-size:12.5px;color:var(--slate);margin-top:16px;line-height:1.5;">
+          When connected to Google, your data syncs to a private file in your Drive, and follow-up dates are added to your Google Calendar automatically.
+        </p>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(DATA,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download=`setu-backup-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  showToast("Backup downloaded");
+}
+function importBackup(evt){
+  const file = evt.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.leads) throw new Error("Invalid file");
+      DATA = parsed;
+      await saveData();
+      closeModal(); showToast("Backup restored"); goTab("dashboard");
+    }catch(err){ showToast("Couldn't read that file"); }
+  };
+  reader.readAsText(file);
+}
+
+// ---------- Init ----------
+(function init(){
+  loadLocal();
+  render();
+})();
+</script>
+</body>
+</html>
